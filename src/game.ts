@@ -73,6 +73,7 @@ export class Game {
     
     initEventListeners() {
         this.canvas.onclick = (e) => {
+            if (!this.activeWord) return;
             e.preventDefault()
             const rect = this.canvas.getBoundingClientRect(); // CSS size
             const scaleX = this.canvas.width / rect.width;
@@ -256,7 +257,9 @@ export class Game {
         });
         setTimeout(() => {
             popupDiv.classList.remove('show');
-            // popupDiv.remove();
+            popupDiv.ontransitionend = () => {
+                popupDiv.remove();
+            }
         }, 2000)
     }
 }
