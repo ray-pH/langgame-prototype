@@ -122,6 +122,7 @@ export class Game {
             img.onload = () => {
                 this.wordToMaskMap.set(word, img);
                 console.log('Loaded mask:', word);
+                this.optionDOMMaskLoaded(word);
             }
             img.onerror = () => {
                 console.error('Failed to load image:', word);
@@ -186,6 +187,12 @@ export class Game {
         }
         this.wordToDOMElementMap.delete(word);
     }
+    optionDOMMaskLoaded(word: string) {
+        const element = this.wordToDOMElementMap.get(word);
+        if (element) {
+            element.classList.remove('loading');
+        }
+    }
     addOptionDOM(word: string) {
         const optionDiv = document.createElement('div');
         optionDiv.classList.add('option');
@@ -202,11 +209,17 @@ export class Game {
             optionDiv.innerText = word;
         }
         
+        const isMaskLoaded = this.wordToMaskMap.has(word);
+        if (!isMaskLoaded) {
+            optionDiv.classList.add('loading');
+        }
         this.optionContainerDiv.appendChild(optionDiv);
         this.wordToDOMElementMap.set(word, optionDiv);
         
         optionDiv.onclick = () => {
-            this.changeActive(word);
+            if (this.wordToMaskMap.has(word)) {
+                this.changeActive(word);
+            }
         };
     }
     renderSettingsDOM() {

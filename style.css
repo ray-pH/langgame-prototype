@@ -72,6 +72,10 @@ hr {
     &.active {
         outline: 0.2em solid cyan;
     }
+    &.loading {
+        cursor: wait;
+        background-color: #aaa;
+    }
 }
 
 .popup {
