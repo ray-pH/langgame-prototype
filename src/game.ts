@@ -24,7 +24,6 @@ function getRandomItems<T>(arr: T[], n: number): T[] {
 
 export class Game {
     
-    maskLoaded = false;
     offscreenCanvas: HTMLCanvasElement;
     offscreenCtx: CanvasRenderingContext2D;
     maskImage: HTMLImageElement = new Image();
@@ -33,6 +32,7 @@ export class Game {
     wordToDOMElementMap: Map<string, HTMLElement> = new Map();
     wordList: string[] = [];
     activeWord: string = '';
+    wordToMaskMap: Map<string, HTMLImageElement> = new Map();
     
     langWordlist: string[] = [];
     furiganaMap: Map<string, FuriganaData[]> = new Map();
@@ -80,16 +80,15 @@ export class Game {
             
             const x = (e.clientX - rect.left) * scaleX;
             const y = (e.clientY - rect.top) * scaleY;
-            if (this.maskLoaded) {
-                const isCorrect = this.isMouseClickActivePart(x, y);
-                console.log('Clicked at:', x, y, 'isCorrect:', isCorrect);
-                if (isCorrect) {
-                    this.showPopup(this.activeWord, e, true);
-                    this.removeOption(this.activeWord)
-                    this.changeActive('');
-                } else {
-                    this.showPopup('X', e, false);
-                }
+            
+            const isCorrect = this.isMouseClickActivePart(x, y);
+            console.log('Clicked at:', x, y, 'isCorrect:', isCorrect);
+            if (isCorrect) {
+                this.showPopup(this.activeWord, e, true);
+                this.removeOption(this.activeWord)
+                this.changeActive('');
+            } else {
+                this.showPopup('X', e, false);
             }
         };
     }
@@ -120,6 +119,10 @@ export class Game {
         wordList.forEach(word => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                this.wordToMaskMap.set(word, img);
+                console.log('Loaded mask:', word);
+            }
             img.onerror = () => {
                 console.error('Failed to load image:', word);
             };
@@ -138,19 +141,15 @@ export class Game {
     
     changeActiveMask(word: string) {
         if (word == '') return;
-        this.maskImage = new Image();
-        this.maskImage.crossOrigin = 'anonymous';
-        this.maskLoaded = false;
-        this.maskImage.onload = () => {
-            this.offscreenCanvas.width = this.canvas.width;
-            this.offscreenCanvas.height = this.canvas.height;
-            this.offscreenCtx.clearRect(0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height);
-            this.offscreenCtx.drawImage(this.maskImage, 0, 0);
-            this.maskLoaded = true;
-            console.log('Loaded mask:', word);
-        };
-        
-        this.maskImage.src = this.getImageURL(word);
+        if (!this.wordToMaskMap.has(word)) {
+            alert(`Error loading data for ${word}`)
+            return;
+        }
+        const mask = this.wordToMaskMap.get(word)!;
+        this.offscreenCanvas.width = this.canvas.width;
+        this.offscreenCanvas.height = this.canvas.height;
+        this.offscreenCtx.clearRect(0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height);
+        this.offscreenCtx.drawImage(mask, 0, 0);
     }
     
     isMouseClickActivePart(x: number, y: number) {
